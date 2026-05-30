@@ -1,0 +1,328 @@
+<% layout("/layouts/boilerplate") %>
+
+<style>
+  /* ── Search header ── */
+  .search-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .search-badge {
+    background-color: #fe424d;
+    color: white;
+    border-radius: 20px;
+    padding: 0.25rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .clear-btn {
+    border: 1.5px solid #333;
+    border-radius: 20px;
+    padding: 0.3rem 1.1rem;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.2s;
+  }
+  .clear-btn:hover {
+    background-color: #333;
+    color: white;
+  }
+
+  /* ── No results ── */
+  .no-results-box {
+    text-align: center;
+    padding: 5rem 1rem;
+    width: 100%;
+  }
+  .no-results-box i {
+    font-size: 3rem;
+    color: #bbb;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  /* ── Per-listing card separator ── */
+  .result-block {
+    border: 1px solid #e0e0e0;
+    border-radius: 1.2rem;
+    padding: 1.5rem 1.5rem 2rem;
+    margin-bottom: 2.5rem;
+    background: white;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .result-block h3 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Map per result ── */
+  .result-map {
+    height: 400px !important;
+    width: 100%;
+    border-radius: 1rem;
+    margin-top: 1rem;
+    background-color: #eee;
+  }
+
+  /* ── Review card owner-only delete ── */
+  .review-delete-form {
+    margin: 0;
+    padding: 0 0 0.6rem 0.75rem;
+  }
+
+  /* ── Highlight matched text ── */
+  .location-badge {
+    font-size: 0.8rem;
+    background: #f5f5f5;
+    border-radius: 20px;
+    padding: 0.15rem 0.65rem;
+    color: #555;
+    margin-left: 0.4rem;
+  }
+</style>
+
+<!-- ════════════════════════════════
+     SEARCH HEADER
+════════════════════════════════ -->
+<div class="search-results-header">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <h5 class="mb-0">
+      Results for <span class="search-badge">"<%= searchQuery %>"</span>
+    </h5>
+    <span class="text-muted" style="font-size:0.9rem;">
+      — <%= allListings.length %> listing<%= allListings.length !== 1 ? "s" : "" %> found
+    </span>
+  </div>
+  <a href="/listings" class="clear-btn">
+    <i class="fa-solid fa-xmark"></i> Clear &amp; Browse all
+  </a>
+</div>
+
+<hr class="mt-2 mb-4">
+
+<!-- ════════════════════════════════
+     NO RESULTS STATE
+════════════════════════════════ -->
+<% if (allListings.length === 0) { %>
+  <div class="no-results-box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <h4>No listings found for "<%= searchQuery %>"</h4>
+    <p class="text-muted">Try a different city, country, or listing name.</p>
+    <a href="/listings" class="btn btn-dark mt-2">Browse all listings</a>
+  </div>
+
+<% } else { %>
+
+  <!-- ════════════════════════════════
+       LOOP — one full block per result
+  ════════════════════════════════ -->
+  <% for (let i = 0; i < allListings.length; i++) { %>
+    <% let specificId = allListings[i]; %>
+
+    <div class="result-block">
+
+      <!-- ── Title + location badge ── -->
+      <h3>
+        <%= specificId.title %>
+        <span class="location-badge">
+          <i class="fa-solid fa-location-dot"></i>
+          <%= specificId.location %>, <%= specificId.country %>
+        </span>
+      </h3>
+
+      <div class="row">
+
+        <!-- ══════════════════════════
+             LEFT — Image + details
+        ══════════════════════════ -->
+        <div class="col-lg-6 col-md-12">
+          <div class="card show-card listing-card">
+
+            <img
+              src="<%= specificId.image.url %>"
+              class="card-img-top show-img"
+              alt="listing_image"
+              style="height:30vh; object-fit:cover;"
+            />
+
+            <div class="card-body mt-2">
+              <p class="card-text">
+                <i class="fa-solid fa-user" style="color:#fe424d;"></i>
+                &nbsp;Owned by <i><b><%= specificId.owner.username %></b></i>
+              </p>
+              <p class="card-text text-muted"><%= specificId.description %></p>
+              <p class="card-text">
+                <i class="fa-solid fa-indian-rupee-sign" style="color:#fe424d;"></i>
+                <b>&#8377; <%= specificId.price?.toLocaleString("en-IN") %></b> / night
+              </p>
+              <p class="card-text">
+                <i class="fa-solid fa-location-dot"></i>
+                <%= specificId.location %>, <%= specificId.country %>
+              </p>
+            </div>
+          </div>
+
+          <!-- ── Full details link ── -->
+          <a href="/listings/<%= specificId._id %>" class="btn btn-dark w-100 mt-2 mb-3">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> View Full Listing
+          </a>
+
+          <!-- ── Owner: Edit / Delete ── -->
+          <% if (currUser && specificId.owner._id.equals(currUser._id)) { %>
+            <div class="d-flex gap-2 mb-3">
+              <a
+                href="/listings/<%= specificId._id %>/edit"
+                class="btn edit-btn btn-dark flex-fill"
+              >
+                <i class="fa-solid fa-pen"></i> Edit
+              </a>
+              <form
+                method="POST"
+                action="/listings/<%= specificId._id %>?_method=DELETE"
+                class="flex-fill"
+              >
+                <button
+                  class="btn btn-outline-danger w-100"
+                  onclick="return confirm('Delete this listing?')"
+                >
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </form>
+            </div>
+          <% } %>
+
+          <!-- ── Review Form (logged-in users) ── -->
+          <% if (currUser) { %>
+            <hr>
+            <h5><i class="fa-solid fa-star" style="color:#fe424d;"></i> Leave a Review</h5>
+            <form
+              action="/listings/<%= specificId.id %>/reviews"
+              method="POST"
+              novalidate
+              class="needs-validation"
+            >
+              <div class="mb-3 mt-2">
+                <label class="form-label">Rating</label>
+                <fieldset class="starability-slot">
+                  <input
+                    type="radio"
+                    id="no-rate-<%= i %>"
+                    class="input-no-range"
+                    name="review[rating]"
+                    value="1"
+                    checked
+                    aria-label="No rating."
+                  />
+                  <input type="radio" id="rate1-<%= i %>" name="review[rating]" value="1" />
+                  <label for="rate1-<%= i %>" title="Terrible">1 star</label>
+                  <input type="radio" id="rate2-<%= i %>" name="review[rating]" value="2" />
+                  <label for="rate2-<%= i %>" title="Not good">2 stars</label>
+                  <input type="radio" id="rate3-<%= i %>" name="review[rating]" value="3" />
+                  <label for="rate3-<%= i %>" title="Average">3 stars</label>
+                  <input type="radio" id="rate4-<%= i %>" name="review[rating]" value="4" />
+                  <label for="rate4-<%= i %>" title="Very good">4 stars</label>
+                  <input type="radio" id="rate5-<%= i %>" name="review[rating]" value="5" />
+                  <label for="rate5-<%= i %>" title="Amazing">5 stars</label>
+                </fieldset>
+              </div>
+              <div class="mb-3">
+                <label for="comment-<%= i %>" class="form-label">Comment</label>
+                <textarea
+                  name="review[comment]"
+                  id="comment-<%= i %>"
+                  cols="30"
+                  rows="3"
+                  class="form-control"
+                  required
+                ></textarea>
+                <div class="invalid-feedback">Please add a comment for your review.</div>
+              </div>
+              <button class="btn btn-outline-dark w-100">
+                <i class="fa-solid fa-paper-plane"></i> Submit Review
+              </button>
+            </form>
+          <% } %>
+
+          <!-- ── All Reviews ── -->
+          <% if (specificId.reviews.length > 0) { %>
+            <hr>
+            <p><b><i class="fa-solid fa-comments" style="color:#fe424d;"></i> All Reviews</b>
+              <span class="text-muted" style="font-size:0.85rem;">
+                (<%= specificId.reviews.length %>)
+              </span>
+            </p>
+            <div class="row">
+              <% for (let review of specificId.reviews) { %>
+                <div class="card col-12 ms-1 mb-3" style="border:1px solid #eee !important; border-radius:0.75rem;">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <i class="fa-solid fa-circle-user" style="color:#fe424d;"></i>
+                      @<%= review.owner.username %>
+                    </h6>
+                    <p class="starability-result" data-rating="<%= review.rating %>"></p>
+                    <p class="card-text"><%= review.comment %></p>
+                  </div>
+                  <% if (currUser && review.owner._id.equals(currUser._id)) { %>
+                    <form
+                      class="review-delete-form"
+                      method="POST"
+                      action="/listings/<%= specificId._id %>/reviews/<%= review._id %>?_method=DELETE"
+                    >
+                      <button class="btn btn-sm btn-outline-danger">
+                        <i class="fa-solid fa-trash"></i> Delete
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
+          <% } else { %>
+            <hr>
+            <p class="text-muted" style="font-size:0.9rem;">No reviews yet. Be the first!</p>
+          <% } %>
+
+        </div><!-- /LEFT col -->
+
+        <!-- ══════════════════════════
+             RIGHT — Map
+        ══════════════════════════ -->
+        <div class="col-lg-6 col-md-12">
+          <h5><i class="fa-solid fa-map-location-dot" style="color:#fe424d;"></i> Where you'll be</h5>
+          <div id="map-<%= i %>" class="result-map"></div>
+
+          <script>
+            (function() {
+              const mapToken_<%= i %> = "<%- process.env.MAP_TOKEN %>";
+              const listingData_<%= i %> = <%- JSON.stringify(specificId) %>;
+
+              const map_<%= i %> = new maplibregl.Map({
+                container: 'map-<%= i %>',
+                style: `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${mapToken_<%= i %>}`,
+                center: listingData_<%= i %>.geometry.coordinates,
+                zoom: 9
+              });
+
+              new maplibregl.Marker({ color: 'red' })
+                .setLngLat(listingData_<%= i %>.geometry.coordinates)
+                .setPopup(
+                  new maplibregl.Popup({ offset: 25 })
+                    .setHTML(
+                      `<h4>${listingData_<%= i %>.location}</h4>
+                       <p>Exact location provided after booking.</p>`
+                    )
+                )
+                .addTo(map_<%= i %>);
+            })();
+          </script>
+        </div><!-- /RIGHT col -->
+
+      </div><!-- /row -->
+    </div><!-- /result-block -->
+
+  <% } %><!-- end for loop -->
+
+<% } %><!-- end else -->

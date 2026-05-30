@@ -1,0 +1,66 @@
+<% layout("/layouts/boilerplate") %>
+ <h2>Edit the current list</h2>
+<div class="row mt-3">
+  <div class="col-8 offset-2">
+       <form method="POST" action="/listings/<%=editListings._id %>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
+
+         <div  class="mb-3">
+            <label for="title" class="form-label">title</label>
+            <input name="listing[title]" value="<%= editListings.title%>" type="text" class="form-control" required/>
+            <div class="valid-feedback">title is good</div> 
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea name="listing[description]" class="form-control" required><%= editListings.description %></textarea>
+            <div class="invalid-feedback">Please enter a short description</div>
+        </div>
+
+        <div class="mb-3">
+        <label for="category" class="form-label">Category</label>
+        <select name="listing[category]" class="form-select" required>
+          <option value="" disabled>Select a category</option>
+          <% const cats = ["Trending","Rooms","Iconic cities","Mountains","Castles","Amazing Pools","Camping","Farms","Arctic","Domes","Boats"]; %>
+          <% const icons = ["🔥","🛏️","🏙️","⛰️","🏰","🏊","🏕️","🐄","🎿","🛖","🚢"]; %>
+          <% for(let c = 0; c < cats.length; c++) { %>
+            <option value="<%= cats[c] %>"
+              <%= editListings.category === cats[c] ? "selected" : "" %>>
+              <%= icons[c] %> <%= cats[c] %>
+            </option>
+          <% } %>
+        </select>
+        <div class="invalid-feedback">Please select a category.</div>
+      </div>
+
+         <div  class="mb-3">
+            Original Listing Image <br/>
+            <img src="<%= originalImageUrl %>" height="250" width="400"/>        
+        </div>
+
+         <div  class="mb-3">
+            <lable for="image" class="form-label">Upload new Image</label>
+            <input name="listing[image][url]" type="file" class="form-control">
+        </div>
+
+       <div class="row">
+            <div  class="mb-3 col-md-4">
+                <label for="price" class="form-label">Price</label>
+                <input name="listing[price]" value="<%= editListings.price%>" type="number" class="form-control" required>
+                <div class="invalid-feedback">price should be valid</div>
+            </div>
+            <div  class="mb-3 col-md-4">
+                <label for="country" class="form-label">Country</label>
+                <input name="listing[country]" value="<%= editListings.country%>" type="text" class="form-control" required>
+                <div class="invalid-feedback">country name should be valid</div>
+            </div>
+        </div>
+        <div  class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input name="listing[location]" value="<%= editListings.location%>" type="text" class="form-control" required>
+            <div class="invalid-feedback">location should be valid</div>
+        </div>
+        <button class="btn btn-dark edit-btn mt-3">Edit </button>
+       </form>
+    </div>
+</div>
+ 
